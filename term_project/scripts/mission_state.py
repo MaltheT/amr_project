@@ -81,7 +81,7 @@ class MissionStateMachine:
         #for loop going determing the rrt path between every waypoint 
         for i in range (len(self.waypoints) - 1):
             rrt = RRT(start=[self.waypoints[i][0], self.waypoints[i][1]], goal=[self.waypoints[i + 1][0], self.waypoints[i + 1][1]],
-            randArea=[-10, 10], obstacleList=self.obstacles)
+            randArea=[-8, 8], obstacleList=self.obstacles)
 
             sub_path = rrt.planning()
             sub_path.reverse()

@@ -9,7 +9,7 @@ from geometry_msgs.msg import TwistStamped, Pose
 from nav_msgs.msg import Odometry
 from mavros_msgs.srv import SetMode
 from mavros_msgs.srv import CommandBool
-
+from std_msgs.msg import Float64
 
 def quaternion_to_euler(x, y, z, w):        
     t0 = +2.0 * (w * x + y * z)
@@ -40,6 +40,8 @@ class DroneController:
         self.goal_subscriber = rospy.Subscriber('/goal', Pose, self.goal_callback)
         self.pose_subscriber = rospy.Subscriber('/mavros/local_position/odom', Odometry, self.position_callback)
         self.velocity_pub = rospy.Publisher('mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)
+        self.yaw_error_pub = rospy.Publisher('yaw_error', Float64, queue_size=10)
+        self.position_error_pub = rospy.Publisher('position_error', Float64, queue_size=10)
         rospy.Timer(rospy.Duration(120), self.writeToCsv, oneshot=True)
 
         # initial goal for hovering
@@ -70,9 +72,9 @@ class DroneController:
         self.kd = 0.1
         
         #gains for yaw angle
-        self.kp_ang = 0.75
-        self.ki_ang = 0.01
-        self.kd_ang = 0.5
+        self.kp_ang = 1.0
+        self.ki_ang = 0.0
+        self.kd_ang = 0.25
 
         #logging for plotting
         self.x_log = []
@@ -93,7 +95,7 @@ class DroneController:
             r.sleep()
 
         #initialize the drone
-        self.initialize_drone()
+        #self.initialize_drone()
 
 
 
@@ -129,6 +131,7 @@ class DroneController:
         self.x_goal = data.position.x
         self.y_goal = data.position.y
         self.z_goal = data.position.z
+        
 
 
     """
@@ -140,6 +143,11 @@ class DroneController:
         self.e_y = self.y_goal - self.y
         self.e_z = self.z_goal - self.z
 
+        manhattan = self.e_x + self.e_y
+        distance_error = Float64()
+        distance_error.data = manhattan
+        self.position_error_pub.publish(distance_error)
+        
         # only accumilate error if the drone is in the air
         if (self.z > 0.5):
             self.e_x_acc += self.e_x
@@ -161,11 +169,21 @@ class DroneController:
         msg.twist.linear.z = self.kp * self.e_z + self.ki * self.e_z_acc + self.kd * (self.e_z - self.e_z_prev)
 
         #calculation of the desired angle 
-        desired_angle = math.atan2(self.x_goal - self.x, self.y_goal - self.y)
-        self.e_yaw = -self.yaw + desired_angle
+        if ((self.e_x < 0.1) and 
+            (self.e_y < 0.1)): 
+            self.yaw_goal = self.yaw
+        
+        else:
+            self.yaw_goal = math.atan2(self.y_goal - self.y, self.x_goal - self.x)
+
+        #update error 
+        self.e_yaw = -self.yaw + self.yaw_goal
+        yaw_error = Float64()
+        yaw_error.data = self.e_yaw
+        self.yaw_error_pub.publish(yaw_error)
 
         #updating the log 
-        self.desired_angle_log.append(desired_angle)
+        self.desired_angle_log.append(self.yaw_goal)
 
         #correcting the yaw in case of switching between +- pi   
         if(self.e_yaw < -math.pi):
@@ -175,7 +193,7 @@ class DroneController:
             self.e_yaw -= 2 * math.pi
 
         #calculating new yaw angle 
-        #msg.twist.angular.z = self.kp_ang * self.e_yaw + self.ki_ang * self.e_yaw_acc + self.kd_ang * (self.e_yaw - self.e_yaw_prev)
+        msg.twist.angular.z = self.kp_ang * self.e_yaw + self.ki_ang * self.e_yaw_acc + self.kd_ang * (self.e_yaw - self.e_yaw_prev)
         
         #updating previous error
         self.e_x_prev = self.e_x

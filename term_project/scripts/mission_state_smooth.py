@@ -17,7 +17,6 @@ class MissionStateMachine:
         self.y = 0.
         self.z = 0. 
         self.threshold = 0.2
-        self.max_iter = 1000 
         size = 2 #size of the obstacle (estimate)
         
 
@@ -29,8 +28,8 @@ class MissionStateMachine:
        
         #lists of the waypoints and obstacles 
         self.obstacles = [[3.25, -1.137, size],[4, 3, size], [-3, 2.9, size]]
-        #self.waypoints = [[0, 0, 0],[-3, 0, 2.5],[0, 0, 2], [0, 0, 0]]
-        self.waypoints = [[0, 0, 0],[-3, 0, 2.5], [-3, 4.5, 2.5], [3, 4, 2], [3, -4, 2], [0, 0, 2], [0, 0, 0]]
+        #self.waypoints = [[0, 0, 0],[-3, 0, 2.5],[0, 0, 2]]
+        self.waypoints = [[0, 0, 0],[-3, 0, 2.5], [-3, 4.5, 2.5], [3, 4, 2], [3, -4, 2], [0, 0, 2]]
         
         #iterators
         self.curr_waypoint_idx = 1
@@ -79,7 +78,7 @@ class MissionStateMachine:
         print("Start RRT path planning")
         for i in range (len(self.waypoints) - 1):
             rrt = RRT(start=[self.waypoints[i][0], self.waypoints[i][1]], goal=[self.waypoints[i + 1][0], self.waypoints[i + 1][1]],
-            randArea=[-10, 10], obstacleList=self.obstacles)
+            randArea=[-8, 8], obstacleList=self.obstacles)
 
             #get the path and reversing it since the output of the function is the reversed path 
             sub_path = rrt.planning()

@@ -38,7 +38,7 @@ class MissionStateMachine:
         size = 2
         self.obstacles = [[3.25, -1.137, size],[4, 3, size], [-3, 2.9, size]]
         #self.waypoints = [[-3, 0, 2.5],[0, 0, 2], [0, 0, 0]]
-        #self.waypoints = [[-3, 0, 2.5], [-3.0, 4.5, 2.5], [3, 4, 2], [3, -4, 2],[0, 0, 2], [0, 0, 0]]
+        self.waypoints = [[-3, 0, 2.5], [-3.0, 4.5, 2.5], [3, 4, 2], [3, -4, 2],[0, 0, 2], [0, 0, 0]]
         #self.waypoints = [[3.0, 0.0, 1.0]] 
         
         self.curr_waypoint_idx = 0

@@ -33,7 +33,7 @@ class RRT():
     """
 
     def __init__(self, start, goal, obstacleList,
-                 randArea, expandDis=1, goalSampleRate=5, maxIter=500):
+                 randArea, expandDis=1, goalSampleRate=2.5, maxIter=5000):
         """
         Setting Parameter:
 
