@@ -95,7 +95,7 @@ class DroneController:
             r.sleep()
 
         #initialize the drone
-        #self.initialize_drone()
+        self.initialize_drone()
 
 
 
