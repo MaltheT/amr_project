@@ -3,6 +3,7 @@ Path Planning Sample Code with Randamized Rapidly-Exploring Random Trees (RRT)
 
 @author: AtsushiSakai(@Atsushi_twi)
 
+#Tilføj link fra Ubuntu:
 """
 
 import matplotlib.pyplot as plt
@@ -21,11 +22,10 @@ class RRT():
         """
         Setting Parameter
 
-        start:Start Position [x,y]
-        goal:Goal Position [x,y]
-        obstacleList:obstacle Positions [[x,y,size],...]
-        randArea:Ramdom Samping Area [min,max]
-
+        start: Start Position [x,y]
+        goal: Goal Position [x,y]
+        obstacleList: Obstacle Positions [[x,y,size],...]
+        randArea: Random Samping Area [min,max]
         """
         self.start = Node(start[0], start[1])
         self.end = Node(goal[0], goal[1])
@@ -36,54 +36,66 @@ class RRT():
         self.maxIter = maxIter
         self.obstacleList = obstacleList
 
+
     def planning(self):
         """
-        Pathplanning
-
-        animation: flag for animation on or off
+        Implementation of RRT algorithm: Determining the path from start to goal 
+        Step 1: Create a random sample 
+        Step 2: Find the node in the current path with lowest distance to the random sample  
+        Step 3: Create a node for the random sample 
+        Step 4: Check for collision
+        Step 5: Expanding the tree in case of no collision, otherwise repeat step 1-4
+        Step 6: Check if goal has been hit, otherwise repeat step 1-5
         """
 
-        self.nodeList = [self.start]
+        self.nodeList = [self.start] #list of nodes (the path itself)
+
         while True:
-            # Random Sampling
+            # random sampling of a x-coordinate and y-coordinate within the specified configuration area
             if random.randint(0, 100) > self.goalSampleRate:
                 rnd = [random.uniform(self.minrand, self.maxrand), random.uniform(
-                    self.minrand, self.maxrand)]
+                    self.minrand, self.maxrand)] 
             else:
                 rnd = [self.end.x, self.end.y]
 
-            # Find nearest node
+            # finding the index of the nearest node in the current path from the random sample point 
             nind = self.get_nearest_list_index(self.nodeList, rnd)
-            # print(nind)
+            nearestNode = self.nodeList[nind] 
 
-            # expand tree
-            nearestNode = self.nodeList[nind]
-            theta = math.atan2(rnd[1] - nearestNode.y, rnd[0] - nearestNode.x)
+            #calculating the angle between the nearest node and the random sample point  
+            theta = math.atan2(rnd[1] - nearestNode.y, rnd[0] - nearestNode.x) 
 
+            #creating node for the random sample 
             newNode = copy.deepcopy(nearestNode)
-            newNode.x += self.expandDis * math.cos(theta)
+            newNode.x += self.expandDis * math.cos(theta) 
             newNode.y += self.expandDis * math.sin(theta)
             newNode.parent = nind
 
+            #check for colission - in case of a colission, the sample node is not added to the current path 
             if not self.collision_check(newNode, self.obstacleList):
                 continue
-
+            
+            #expanding the list/tree
             self.nodeList.append(newNode)
 
-            # check goal
+            # checking if the target goal has been hit 
             dx = newNode.x - self.end.x
             dy = newNode.y - self.end.y
             d = math.sqrt(dx * dx + dy * dy)
             if d <= self.expandDis:
                 print("Goal!")
                 break
+        
 
+        #creating the path: going through the parent of every connected node 
+        #and adding the x- and y-coordinates to the path 
         path = [[self.end.x, self.end.y]]
         lastIndex = len(self.nodeList) - 1
         while self.nodeList[lastIndex].parent is not None:
             node = self.nodeList[lastIndex]
             path.append([node.x, node.y])
             lastIndex = node.parent
+
         path.append([self.start.x, self.start.y])
 
         #smoothing out the path 
@@ -94,12 +106,23 @@ class RRT():
 
 
     def get_nearest_list_index(self, nodeList, rnd):
+        """
+        Getting the index of the nearest node in the current path from the random sample
+        """
+
+        #calculating the distance for each node in the path 
         dlist = [(node.x - rnd[0]) ** 2 + (node.y - rnd[1])
                  ** 2 for node in nodeList]
+        #determining the index of the node with lowest distance 
         minind = dlist.index(min(dlist))
+
         return minind
 
+
     def collision_check(self, node, obstacleList):
+        """
+        Checking if for 
+        """
 
         for (ox, oy, size) in obstacleList:
             dx = ox - node.x
@@ -109,6 +132,8 @@ class RRT():
                 return False  # collision
 
         return True  # safe
+
+
 
 
 class Node():
@@ -122,8 +147,13 @@ class Node():
         self.parent = None
 
 
+
 def get_path_length(path):
+    """
+    Calculating the 
+    """
     le = 0
+
     for i in range(len(path) - 1):
         dx = path[i + 1][0] - path[i][0]
         dy = path[i + 1][1] - path[i][1]
