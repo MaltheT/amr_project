@@ -113,6 +113,7 @@ class RRT():
         #calculating the distance for each node in the path 
         dlist = [(node.x - rnd[0]) ** 2 + (node.y - rnd[1])
                  ** 2 for node in nodeList]
+
         #determining the index of the node with lowest distance 
         minind = dlist.index(min(dlist))
 
@@ -121,13 +122,15 @@ class RRT():
 
     def collision_check(self, node, obstacleList):
         """
-        Checking if for 
+        Checking for collision between node and specified obstacles 
         """
 
+        #calculating the euclidean distance between node and every obstacle 
         for (ox, oy, size) in obstacleList:
             dx = ox - node.x
             dy = oy - node.y
             d = math.sqrt(dx * dx + dy * dy)
+
             if d <= size:
                 return False  # collision
 
@@ -147,10 +150,9 @@ class Node():
         self.parent = None
 
 
-
 def get_path_length(path):
     """
-    Calculating the 
+    Calculating length of the entire path 
     """
     le = 0
 
@@ -164,33 +166,42 @@ def get_path_length(path):
 
 
 def get_target_point(path, targetL):
+    """
+    Determining new path point for a target length (determined randomly)
+    """
+
     le = 0
     ti = 0
     lastPairLen = 0
+
+
     for i in range(len(path) - 1):
+        #going through every point in that path and adding the length
         dx = path[i + 1][0] - path[i][0]
         dy = path[i + 1][1] - path[i][1]
         d = math.sqrt(dx * dx + dy * dy)
         le += d
+
+        #stopping when the accumulated length of the path has reached the target length
         if le >= targetL:
-            ti = i - 1
-            lastPairLen = d
+            ti = i - 1          #going back one index/point 
+            lastPairLen = d    
             break
 
+    #computing ratio between the difference of the target length and the accumulated length and
     partRatio = (le - targetL) / lastPairLen
-    #  print(partRatio)
-    #  print((ti,len(path),path[ti],path[ti+1]))
 
+    #computing new x- and y-coordinates 
     x = path[ti][0] + (path[ti + 1][0] - path[ti][0]) * partRatio
     y = path[ti][1] + (path[ti + 1][1] - path[ti][1]) * partRatio
-    #  print((x,y))
 
     return [x, y, ti]
 
 
 def line_collision_check(first, second, obstacleList):
-    # Line Equation
-
+    """
+    Checking if a line between two points yields a collision with obstacle 
+    """
     x1 = first[0]
     y1 = first[1]
     x2 = second[0]
@@ -206,34 +217,37 @@ def line_collision_check(first, second, obstacleList):
     for (ox, oy, size) in obstacleList:
         d = abs(a * ox + b * oy + c) / (math.sqrt(a * a + b * b))
         if d <= (size):
-            return False
+            return False #collision
 
-    #  print("OK")
-
-    return True  # OK
+    return True  # no collision 
 
 
 def path_smoothing(path, maxIter, obstacleList):
-    #  print("PathSmoothing")
+    """
+    Smoothing out afther RRT has computed a path 
+    """
 
     le = get_path_length(path)
 
     for i in range(maxIter):
-        # Sample two points
+        # sample two random lengths within the current path 
         pickPoints = [random.uniform(0, le), random.uniform(0, le)]
         pickPoints.sort()
-        #  print(pickPoints)
-        first = get_target_point(path, pickPoints[0])
-        #  print(first)
-        second = get_target_point(path, pickPoints[1])
-        #  print(second)
 
+        #getting the target point from both samples 
+        first = get_target_point(path, pickPoints[0])
+        second = get_target_point(path, pickPoints[1])
+
+        #conditions in which the calculated target points not used:
+        #if index of the targets are equal to the first point (no new targets have been calculated)
         if first[2] <= 0 or second[2] <= 0:
             continue
-
+        
+        #if the index of the greater sample exceed the the path list 
         if (second[2] + 1) > len(path):
             continue
-
+        
+        #if the index of the samples are equal 
         if second[2] == first[2]:
             continue
 
@@ -241,17 +255,16 @@ def path_smoothing(path, maxIter, obstacleList):
         if not line_collision_check(first, second, obstacleList):
             continue
 
-        # Create New path
+        # creating a new path 
         newPath = []
-        newPath.extend(path[:first[2] + 1])
-        newPath.append([first[0], first[1]])
-        newPath.append([second[0], second[1]])
-        newPath.extend(path[second[2] + 1:])
+        newPath.extend(path[:first[2] + 1])     #creating room for the first sample in the list 
+        newPath.append([first[0], first[1]])    #adding the first sample 
+        newPath.append([second[0], second[1]])  #adding the second sample 
+        newPath.extend(path[second[2] + 1:])    #creating room for second sample in the list 
         path = newPath
         le = get_path_length(path)
 
     return path
-
 
 
 if __name__ == '__main__':
