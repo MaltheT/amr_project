@@ -34,3 +34,11 @@ Note: Please run the controller first and wait for it to hover before running th
 
 
 ## Object Detection Model
+
+The costume trained object detection model can be tested using the YOLOv5.ipynb notebook file in the 'object_detection' folder. 
+
+Please run all the cells in the notebook, as this will install most dependencies. 
+
+Additinal dependencies are required such as torch and cv2 libraries and more, but will not be installed automatically by the notebook.
+
+Finally, test images can be put into the 'test_images' folder, or pathed to in the code.
