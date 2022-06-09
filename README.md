@@ -10,7 +10,9 @@ The simulation has been tested on Ubuntu 18.04 machine:
 
 
 ## Running the Drone
+Before running:
 - Clone the term_project folder into your catkin workspace and build it
+
 
 For running the drone, open three terminals. 
 
